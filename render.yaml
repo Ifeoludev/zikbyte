@@ -52,7 +52,6 @@ services:
   - type: web
     name: zikbyte-web
     runtime: static
-    region: frankfurt
     buildCommand: npm install && npm run build --workspace=@zikbyte/web
     staticPublishPath: packages/web/dist
     envVars:
