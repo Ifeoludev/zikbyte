@@ -8,7 +8,6 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:4000',
-      '/compressed': 'http://localhost:4000',
     },
   },
 })

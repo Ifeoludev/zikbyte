@@ -23,6 +23,11 @@ interface JobStatusResponse {
 const POLL_INTERVAL_MS = 1000;
 const MAX_POLLS = 120; // ~2 minutes before we give up
 
+// Unset locally — Vite's dev proxy makes relative /api/* calls reach the api
+// on the same origin. In production the static site and api are on different
+// Render domains, so this gets baked in at build time to the api's real URL.
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
+
 export default function App() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -47,7 +52,7 @@ export default function App() {
 
     let jobId: string;
     try {
-      const res = await fetch("/api/compress", {
+      const res = await fetch(`${API_BASE_URL}/api/compress`, {
         method: "POST",
         body: formData,
       });
@@ -73,7 +78,7 @@ export default function App() {
 
       let data: JobStatusResponse;
       try {
-        const res = await fetch(`/api/jobs/${jobId}`);
+        const res = await fetch(`${API_BASE_URL}/api/jobs/${jobId}`);
         data = (await res.json()) as JobStatusResponse;
       } catch {
         continue; // transient network blip — try again next tick

@@ -60,7 +60,12 @@ setInterval(() => {
 }, 2000);
 
 const app = express();
-app.use(cors());
+// Unset locally (Vite's dev proxy makes web and api same-origin, so CORS
+// never enters into it there) — Render's static site and api live on
+// different domains in production, so CORS_ORIGIN gets set to the deployed
+// frontend's exact URL there.
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(cors(corsOrigin ? { origin: corsOrigin } : undefined));
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
