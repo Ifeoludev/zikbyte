@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+storage/uploads/*
+storage/compressed/*
+!storage/uploads/.gitkeep
+!storage/compressed/.gitkeep
+.env
+packages/api/scripts/fixtures/
