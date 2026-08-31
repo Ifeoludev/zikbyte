@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 interface CompressResult {
   downloadUrl: string;
@@ -7,21 +7,11 @@ interface CompressResult {
   savedPercent: number;
 }
 
-type Status = //status state
+type Status =
   | { kind: "idle" }
-  | { kind: "uploading" }
-  | { kind: "processing" }
+  | { kind: "compressing" }
   | { kind: "error"; message: string }
   | { kind: "done"; result: CompressResult };
-
-interface JobStatusResponse {
-  status: "processing" | "done" | "failed" | "expired" | "not_found";
-  result?: CompressResult;
-  error?: string;
-}
-
-const POLL_INTERVAL_MS = 1000;
-const MAX_POLLS = 120; // ~2 minutes before we give up
 
 // Unset locally — Vite's dev proxy makes relative /api/* calls reach the api
 // on the same origin. In production the static site and api are on different
@@ -31,26 +21,16 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
 export default function App() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const cancelledRef = useRef(false);
-
-  // If the component unmounts mid-poll, stop touching state.
-  useEffect(() => {
-    return () => {
-      cancelledRef.current = true;
-    };
-  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!file) return;
 
-    cancelledRef.current = false;
-    setStatus({ kind: "uploading" });
+    setStatus({ kind: "compressing" });
 
     const formData = new FormData();
     formData.append("image", file);
 
-    let jobId: string;
     try {
       const res = await fetch(`${API_BASE_URL}/api/compress`, {
         method: "POST",
@@ -61,51 +41,13 @@ export default function App() {
         setStatus({ kind: "error", message: data.error ?? "Upload failed." });
         return;
       }
-      jobId = data.jobId;
+      setStatus({ kind: "done", result: data as CompressResult });
     } catch {
       setStatus({ kind: "error", message: "Upload failed." });
-      return;
     }
-
-    setStatus({ kind: "processing" });
-    void pollUntilDone(jobId);
   }
 
-  async function pollUntilDone(jobId: string) {
-    for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-      if (cancelledRef.current) return;
-
-      let data: JobStatusResponse;
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/jobs/${jobId}`);
-        data = (await res.json()) as JobStatusResponse;
-      } catch {
-        continue; // transient network blip — try again next tick
-      }
-
-      if (data.status === "done" && data.result) {
-        setStatus({ kind: "done", result: data.result });
-        return;
-      }
-      if (data.status !== "processing") {
-        setStatus({
-          kind: "error",
-          message: data.error ?? "Compression failed.",
-        });
-        return;
-      }
-    }
-    setStatus({ kind: "error", message: "Timed out waiting for compression." });
-  }
-
-  const busy = status.kind === "uploading" || status.kind === "processing";
-  const buttonLabel =
-    status.kind === "uploading"
-      ? "Uploading…"
-      : status.kind === "processing"
-        ? "Compressing…"
-        : "Compress";
+  const busy = status.kind === "compressing";
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center gap-6 px-4 py-16">
@@ -131,13 +73,9 @@ export default function App() {
           disabled={!file || busy}
           className="mt-4 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
         >
-          {buttonLabel}
+          {busy ? "Compressing…" : "Compress"}
         </button>
       </form>
-
-      {status.kind === "processing" && (
-        <p className="text-sm text-neutral-500">Working on it…</p>
-      )}
 
       {status.kind === "error" && (
         <p className="text-sm text-red-600">{status.message}</p>

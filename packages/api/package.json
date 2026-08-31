@@ -9,20 +9,15 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "loadtest": "tsx scripts/loadtest-compress.ts",
-    "loadtest:control": "tsx scripts/loadtest-control.ts",
-    "loadtest:worker": "tsx scripts/loadtest-worker.ts"
+    "loadtest:control": "tsx scripts/loadtest-control.ts"
   },
   "dependencies": {
     "@zikbyte/core": "*",
-    "@zikbyte/queue": "*",
     "@zikbyte/storage": "*",
-    "bullmq": "^5.34.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "ioredis": "^5.4.1",
-    "multer": "^2.0.1",
-    "nanoid": "^3.3.7"
+    "multer": "^2.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

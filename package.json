@@ -6,11 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "redis:up": "docker compose up -d",
-    "redis:down": "docker compose down",
-    "dev": "concurrently -n api,worker,web -c blue,magenta,green \"npm:dev:api\" \"npm:dev:worker\" \"npm:dev:web\"",
+    "dev": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev --workspace=@zikbyte/api",
-    "dev:worker": "npm run dev --workspace=@zikbyte/worker",
     "dev:web": "npm run dev --workspace=@zikbyte/web",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",

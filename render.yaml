@@ -18,41 +18,11 @@ services:
         sync: false
       - key: B2_APPLICATION_KEY
         sync: false
-      - key: REDIS_URL
-        sync: false
       # Not a secret — Render's assigned public URL for zikbyte-web, known
       # only after that service's first deploy, hence added here rather
       # than at initial blueprint creation.
       - key: CORS_ORIGIN
         value: https://zikbyte-web.onrender.com
-
-  # Render's free plan doesn't offer the "worker" (background worker) service
-  # type — only "web" is free, so this masquerades as one. worker.ts binds
-  # $PORT and answers health checks purely to satisfy that; its real job is
-  # BullMQ processing, unaffected by this.
-  - type: web
-    name: zikbyte-worker
-    runtime: node
-    plan: free
-    region: frankfurt
-    buildCommand: npm install && npm run build --workspace=@zikbyte/worker
-    startCommand: npm run start --workspace=@zikbyte/worker
-    healthCheckPath: /
-    envVars:
-      - key: B2_ENDPOINT
-        sync: false
-      - key: B2_REGION
-        sync: false
-      - key: B2_BUCKET
-        sync: false
-      - key: B2_KEY_ID
-        sync: false
-      - key: B2_APPLICATION_KEY
-        sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: WORKER_CONCURRENCY
-        value: 2
 
   - type: web
     name: zikbyte-web

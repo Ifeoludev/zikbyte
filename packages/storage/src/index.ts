@@ -2,16 +2,16 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Backblaze B2's S3-compatible API. Any S3-compatible provider (R2, MinIO,
 // real S3) works here unchanged — only the env vars below would need to
 // point somewhere else.
+//
+// No delete/sweep logic here — a bucket lifecycle rule on B2 handles expiry
+// instead, so nothing in the app needs to track or clean up old objects.
 
-export const UPLOADS_PREFIX = "uploads/";
 export const COMPRESSED_PREFIX = "compressed/";
 
 const DOWNLOAD_URL_TTL_SECONDS = 5 * 60;
@@ -52,38 +52,6 @@ export async function putObject(
   );
 }
 
-export async function getObject(client: S3Client, key: string): Promise<Buffer> {
-  const { Body } = await client.send(
-    new GetObjectCommand({ Bucket: bucketName(), Key: key }),
-  );
-  if (!Body) throw new Error(`Object not found: ${key}`);
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of Body as AsyncIterable<Uint8Array>) chunks.push(chunk);
-  return Buffer.concat(chunks);
-}
-
-export async function deleteObject(client: S3Client, key: string): Promise<void> {
-  await client.send(new DeleteObjectCommand({ Bucket: bucketName(), Key: key }));
-}
-
-/**
- * Deletes every object under a prefix. Used by the expiry sweep so cleanup
- * doesn't depend on the BullMQ job record still existing — it self-heals even
- * if that record was already reaped by removeOnComplete's own age-based TTL.
- */
-export async function deleteObjectsByPrefix(
-  client: S3Client,
-  prefix: string,
-): Promise<void> {
-  const { Contents } = await client.send(
-    new ListObjectsV2Command({ Bucket: bucketName(), Prefix: prefix }),
-  );
-  if (!Contents?.length) return;
-  await Promise.all(
-    Contents.filter((obj) => obj.Key).map((obj) => deleteObject(client, obj.Key!)),
-  );
-}
-
 /** A time-limited download link — the API hands this to the client rather than proxying bytes itself. */
 export async function getDownloadUrl(
   client: S3Client,
@@ -99,10 +67,6 @@ export async function getDownloadUrl(
     }),
     { expiresIn: DOWNLOAD_URL_TTL_SECONDS },
   );
-}
-
-export function uploadKey(hash: string, ext: string): string {
-  return `${UPLOADS_PREFIX}${hash}${ext}`;
 }
 
 export function compressedKey(hash: string, ext: string): string {
