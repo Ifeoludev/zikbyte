@@ -20,11 +20,11 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
-      # Left blank on first deploy — fill in with the zikbyte-web static
-      # site's actual assigned URL once it exists, then this service
-      # restarts automatically on save.
+      # Not a secret — Render's assigned public URL for zikbyte-web, known
+      # only after that service's first deploy, hence added here rather
+      # than at initial blueprint creation.
       - key: CORS_ORIGIN
-        sync: false
+        value: https://zikbyte-web.onrender.com
 
   # Render's free plan doesn't offer the "worker" (background worker) service
   # type — only "web" is free, so this masquerades as one. worker.ts binds
@@ -60,9 +60,11 @@ services:
     buildCommand: npm install && npm run build --workspace=@zikbyte/web
     staticPublishPath: packages/web/dist
     envVars:
-      # Left blank on first deploy — fill in with the zikbyte-api web
-      # service's actual assigned URL once it exists, then trigger a
-      # manual redeploy (static builds bake this in at build time, so a
-      # plain env-var save alone doesn't take effect like it does above).
+      # Not a secret — Render's assigned public URL for zikbyte-api, known
+      # only after that service's first deploy, hence added here rather
+      # than at initial blueprint creation. Static builds bake env vars in
+      # at build time, so this alone won't take effect until the next
+      # deploy of this service — unlike a plain web service's env var,
+      # which applies on save via a restart, no rebuild needed.
       - key: VITE_API_URL
-        sync: false
+        value: https://zikbyte-api.onrender.com
