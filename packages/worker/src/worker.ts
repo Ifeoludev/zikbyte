@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 // injected directly and this file is never deployed).
 dotenv.config({ path: path.join(__dirname, "..", "..", "..", ".env") });
 
+import http from "node:http";
 import { Worker } from "bullmq";
 import { compressImage, extensionFor, contentTypeFor } from "@zikbyte/core";
 import {
@@ -31,6 +32,17 @@ import {
 
 const CONCURRENCY = Number(process.env.WORKER_CONCURRENCY ?? 2);
 const SWEEP_INTERVAL_MS = 2 * 60 * 1000;
+
+// Render's free plan has no "background worker" service type — only "web"
+// services (which must bind a port and answer health checks) are free. This
+// listener exists purely to satisfy that requirement; the real job is BullMQ
+// processing below, same as it'd be with a true background worker.
+if (process.env.PORT) {
+  const port = Number(process.env.PORT);
+  http
+    .createServer((_req, res) => res.writeHead(200).end("ok"))
+    .listen(port, () => console.log(`[worker] health endpoint on :${port}`));
+}
 
 const storage = createStorageClient();
 

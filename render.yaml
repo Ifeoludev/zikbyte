@@ -26,13 +26,18 @@ services:
       - key: CORS_ORIGIN
         sync: false
 
-  - type: worker
+  # Render's free plan doesn't offer the "worker" (background worker) service
+  # type — only "web" is free, so this masquerades as one. worker.ts binds
+  # $PORT and answers health checks purely to satisfy that; its real job is
+  # BullMQ processing, unaffected by this.
+  - type: web
     name: zikbyte-worker
     runtime: node
     plan: free
     region: frankfurt
     buildCommand: npm install && npm run build --workspace=@zikbyte/worker
     startCommand: npm run start --workspace=@zikbyte/worker
+    healthCheckPath: /
     envVars:
       - key: B2_ENDPOINT
         sync: false
