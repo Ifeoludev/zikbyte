@@ -3,3 +3,4 @@ dist/
 *.tsbuildinfo
 .env
 packages/api/scripts/fixtures/
+ZikByte Architecture.pdf
