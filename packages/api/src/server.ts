@@ -1,10 +1,9 @@
 import path from "node:path";
 import dotenv from "dotenv";
 
-// Loaded before any other import — @zikbyte/storage reads process.env at
-// module load time, so this has to run first. Silently no-ops if repo-root
-// .env doesn't exist (e.g. on Render, where real env vars are injected
-// directly and this file is never deployed).
+// Loaded before createStorageClient() below needs B2_* env vars. Silently
+// no-ops if repo-root .env doesn't exist (e.g. on Render, where real env
+// vars are injected directly and this file is never deployed).
 dotenv.config({ path: path.join(__dirname, "..", "..", "..", ".env") });
 
 import crypto from "node:crypto";
@@ -99,6 +98,7 @@ app.use(
       res.status(413).json({ error: "File too large." });
       return;
     }
+    console.error("[server] unhandled error:", err);
     res.status(500).json({ error: "Unexpected server error." });
   },
 );

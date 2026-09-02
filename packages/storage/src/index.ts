@@ -12,15 +12,15 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 // No delete/sweep logic here — a bucket lifecycle rule on B2 handles expiry
 // instead, so nothing in the app needs to track or clean up old objects.
 
-export const COMPRESSED_PREFIX = "compressed/";
+const COMPRESSED_PREFIX = "compressed/";
 
 const DOWNLOAD_URL_TTL_SECONDS = 5 * 60;
 
 // A function, not a module-level constant: tsx/Node run this file's imports
 // with ESM hoisting semantics, so a top-level `const BUCKET = process.env...`
-// would capture its value before the entrypoint's dotenv.config() call ever
-// runs, regardless of where that call sits in server.ts/worker.ts. Reading
-// lazily, at call time, sidesteps that entirely.
+// would capture its value before server.ts's dotenv.config() call ever runs,
+// regardless of where that call sits in source order. Reading lazily, at
+// call time, sidesteps that entirely.
 function bucketName(): string {
   return process.env.B2_BUCKET ?? "";
 }

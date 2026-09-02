@@ -21,11 +21,9 @@ const DEFAULT_QUALITY = 80;
 const DEFAULT_MAX_DIMENSION = 2048;
 
 /**
- * Compresses a single image, bytes in and bytes out. This is the one seam the
- * whole system is built around: called directly from the API route in Phase 1,
- * and by a background worker since Phase 2, with no change to this function
- * itself. Working in Buffers rather than file paths keeps it storage-agnostic —
- * callers own where the bytes come from and go.
+ * Compresses a single image, bytes in and bytes out. Working in Buffers
+ * rather than file paths keeps it storage-agnostic — callers own where the
+ * bytes come from and go.
  */
 export async function compressImage({
   input,
